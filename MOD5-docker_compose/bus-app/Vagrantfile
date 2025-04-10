@@ -1,14 +1,55 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
 Vagrant.configure("2") do |config|
-  config.vm.box = "bento/ubuntu-22.04"
-  config.vm.network "private_network", ip: "192.168.33.10"
-  config.vm.network "forwarded_port", guest: 80, host: 8080  
-  config.vm.provision "shell", inline: <<-SHELL
-    # Instalar Docker según procedimientos oficiales
-    curl -fsSL https://get.docker.com -o get-docker.sh
-    sudo sh get-docker.sh
-    sudo usermod -aG docker vagrant
+  # Configuración común para todos los nodos
+  config.vm.box_check_update = false
 
-  SHELL
+  # Nodo Manager
+  config.vm.define "manager" do |manager|
+    manager.vm.box = "bento/rockylinux-9"
+    manager.vm.hostname = "manager"
+    manager.vm.network "private_network", ip: "192.168.33.10"
+    manager.vm.provider "virtualbox" do |vb|
+      vb.name = "manager"
+      vb.memory = 5120 # 5GB
+      vb.cpus = 2
+    end
+    manager.vm.provision "shell", inline: <<-SHELL
+      sudo yum -y update
+      sudo yum -y install python3 podman
+    SHELL
+  end
 
-  config.vm.synced_folder ".", "/vagrant"
+  # Worker_1
+  config.vm.define "worker_1" do |worker_1|
+    worker_1.vm.box = "bento/rockylinux-9"
+    worker_1.vm.hostname = "worker_1"
+    worker_1.vm.network "private_network", ip: "192.168.33.11"
+    worker_1.vm.provider "virtualbox" do |vb|
+      vb.name = "worker_1"
+      vb.memory = 2048 # 2GB
+      vb.cpus = 1
+    end
+    nodo1.vm.provision "shell", inline: <<-SHELL
+      sudo yum -y update
+      sudo yum -y install python3 podman
+    SHELL
+  end
+
+  # Worker_2
+  config.vm.define "worker_2" do |worker_2|
+    worker_2.vm.box = "bento/rockylinux-8"
+    worker_2.vm.hostname = "worker_2"
+    nodo2.vm.network "private_network", ip: "192.168.33.12"
+    nodo2.vm.provider "virtualbox" do |vb|
+      vb.name = "worker_2"
+      vb.memory = 2048 # 2GB
+      vb.cpus = 1
+    end
+    nodo2.vm.provision "shell", inline: <<-SHELL
+      sudo yum -y update
+      sudo yum -y install python3 podman
+    SHELL
+  end
 end
